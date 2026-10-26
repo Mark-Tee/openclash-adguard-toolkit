@@ -1,0 +1,5 @@
+interface:
+  display_name: "OpenClash + AdGuard Optimizer"
+  short_description: "Optimize OpenClash and AdGuard DNS safely."
+  brand_color: "#2563EB"
+  default_prompt: "Use $openclash-adguard-optimizer to audit and optimize my OpenClash and AdGuard DNS setup safely."

@@ -138,3 +138,7 @@ python -m pip install -r requirements.txt
 ## 项目续接
 
 [项目交接与验证状态](docs/PROJECT_STATUS.md)：关键规则、已知限制与后续验证。
+
+## 稳定性维护
+
+[稳定性检查与维护指南](references/stability-maintenance.md)：重复服务、计划任务、固定出口及最小变更验证。

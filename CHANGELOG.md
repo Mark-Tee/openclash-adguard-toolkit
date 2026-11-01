@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Added sanitized stability maintenance guidance for duplicate services, database update schedules and fixed-egress policies.
+
 ## 0.1.0 - 2026-10-26
 
 - Initial public release.

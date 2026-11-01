@@ -134,3 +134,7 @@ python -m pip install -r requirements.txt
 
 本项目使用 MIT License。引用的第三方项目与数据源见 `NOTICE.md` 和
 `references/sources.md`。
+
+## 项目续接
+
+[项目交接与验证状态](docs/PROJECT_STATUS.md)：关键规则、已知限制与后续验证。

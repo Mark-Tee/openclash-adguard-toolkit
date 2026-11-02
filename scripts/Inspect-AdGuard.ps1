@@ -54,6 +54,38 @@ finally {
     $loginBody = $null
 }
 
+function Protect-DiagnosticValue($Value) {
+    if ($null -eq $Value) { return $null }
+    if ($Value -is [string]) {
+        return [regex]::Replace($Value, '(?i)\b(?:https?|tls|quic|h3|tcp|udp|sdns)://[^\s"<>]+', {
+            param($Match)
+            try {
+                $uri = [uri]$Match.Value
+                if ($uri.Scheme -eq 'sdns') { return 'sdns://***' }
+                $safe = $uri.GetComponents([UriComponents]::SchemeAndServer, [UriFormat]::UriEscaped)
+                if ($uri.AbsolutePath -notin @('', '/')) { $safe += '/***' }
+                elseif ($uri.AbsolutePath -eq '/') { $safe += '/' }
+                if ($uri.Query) { $safe += '?***' }
+                if ($uri.Fragment) { $safe += '#***' }
+                return $safe
+            } catch { return '<redacted-url>' }
+        })
+    }
+    if ($Value -is [System.Collections.IDictionary]) {
+        $safe = [ordered]@{}
+        foreach ($key in $Value.Keys) { $safe[$key] = Protect-DiagnosticValue $Value[$key] }
+        return $safe
+    }
+    if ($Value -is [array]) { return ,@($Value | ForEach-Object { Protect-DiagnosticValue $_ }) }
+    if ($Value -is [pscustomobject]) {
+        $safe = [ordered]@{}
+        foreach ($property in $Value.PSObject.Properties) { $safe[$property.Name] = Protect-DiagnosticValue $property.Value }
+        return $safe
+    }
+    return $Value
+}
+
+$snapshot = Protect-DiagnosticValue $snapshot
 $json = $snapshot | ConvertTo-Json -Depth 20
 $json = [regex]::Replace($json, '(?i)(https?://)[^/"\s]+@', '$1***@')
 $json = [regex]::Replace(

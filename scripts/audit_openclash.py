@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 
 import yaml
+from redact_dns import redact
 
 
 def main() -> int:
@@ -85,7 +86,7 @@ def main() -> int:
             and ("GEOSITE,cn" in rule or "GEOIP,CN" in rule or "GEOSITE,private" in rule)
         ],
     }
-    print(json.dumps(output, ensure_ascii=False, indent=2))
+    print(json.dumps(redact(output), ensure_ascii=False, indent=2))
     return 0
 
 

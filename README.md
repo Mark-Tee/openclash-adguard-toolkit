@@ -142,3 +142,10 @@ python -m pip install -r requirements.txt
 ## 稳定性维护
 
 [稳定性检查与维护指南](references/stability-maintenance.md)：重复服务、计划任务、固定出口及最小变更验证。
+
+## 回滚与诊断输出的安全修复
+
+- 自定义规则开始覆盖后，中途错误及可捕获的 HUP/INT/TERM 信号会触发回滚；断电或 SIGKILL 无法自动回滚，须先核验备份；回滚失败会明确要求从备份核验恢复。
+- `OPENCLASH_CHANGE_FILE` 默认仍为 `/tmp/openclash.change`，可重定向到隔离测试文件；正常路由器使用无需设置。
+- DNS审计只输出脱敏端点：保留协议、主机、端口，隐藏userinfo、非根路径、查询及片段；DNS stamp整体隐藏。终端和保存的JSON使用同一脱敏结果。
+- `python -m unittest discover -s tests` 验证候选、失败回滚与脱敏；`pwsh -File tests/Test-Redaction.ps1` 验证PowerShell输出。缺少bash时回滚测试会显式跳过；测试不接路由器。

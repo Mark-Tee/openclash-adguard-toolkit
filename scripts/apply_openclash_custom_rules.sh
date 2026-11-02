@@ -23,6 +23,7 @@ MARKER="${2:-}"
 }
 
 OPENCLASH_CONFIG="${OPENCLASH_CONFIG:-/etc/config/openclash}"
+CHANGE_FILE="${OPENCLASH_CHANGE_FILE:-/tmp/openclash.change}"
 CUSTOM_DIR="${CUSTOM_DIR:-/etc/openclash/custom}"
 CUSTOM_RULES="${CUSTOM_RULES:-$CUSTOM_DIR/openclash_custom_rules.list}"
 OPENCLASH_SERVICE="${OPENCLASH_SERVICE:-/etc/init.d/openclash}"
@@ -43,30 +44,43 @@ fi
 
 rollback() {
   echo "Rolling back OpenClash custom rules" >&2
-  cp -p "$BACKUP_DIR/config-openclash" "$OPENCLASH_CONFIG"
+  cp -p "$BACKUP_DIR/config-openclash" "$OPENCLASH_CONFIG" || return 1
   if [ "$had_custom_rules" = "1" ]; then
-    cp -p "$BACKUP_DIR/openclash_custom_rules.list" "$CUSTOM_RULES"
+    cp -p "$BACKUP_DIR/openclash_custom_rules.list" "$CUSTOM_RULES" || return 1
   else
     rm -f "$CUSTOM_RULES"
   fi
   if [ -n "${old_enabled:-}" ]; then
-    uci set "openclash.config.enable_custom_clash_rules=$old_enabled"
+    uci set "openclash.config.enable_custom_clash_rules=$old_enabled" || return 1
   else
     uci delete openclash.config.enable_custom_clash_rules 2>/dev/null || true
   fi
-  uci commit openclash
-  rm -f /tmp/openclash.change
-  "$OPENCLASH_SERVICE" restart || true
+  uci commit openclash || return 1
+  rm -f "$CHANGE_FILE"
+  "$OPENCLASH_SERVICE" restart
 }
+
+rollback_required=1
+on_exit() {
+  code=$?
+  trap - EXIT HUP INT TERM
+  if [ "$rollback_required" = "1" ]; then
+    rollback || echo "Rollback failed; restore backup=$BACKUP_DIR before retrying" >&2
+  fi
+  exit "$code"
+}
+trap on_exit EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 cp -p "$CANDIDATE" "$CUSTOM_RULES"
 chmod 600 "$CUSTOM_RULES"
 uci set openclash.config.enable_custom_clash_rules=1
 uci commit openclash
-rm -f /tmp/openclash.change
+rm -f "$CHANGE_FILE"
 
 if ! "$OPENCLASH_SERVICE" restart; then
-  rollback
   exit 1
 fi
 
@@ -88,10 +102,10 @@ for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27
 done
 
 if [ "$ready" != "1" ]; then
-  rollback
   exit 1
 fi
 
+rollback_required=0
 echo "APPLY_OK"
 echo "backup=$BACKUP_DIR"
 echo "runtime_config=$runtime_config"

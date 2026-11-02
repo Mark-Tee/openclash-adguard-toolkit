@@ -9,6 +9,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 import yaml
+from redact_dns import redact
 
 
 def host_of(value: object) -> str | None:
@@ -89,7 +90,7 @@ def main() -> int:
         "tls_enabled": (data.get("tls") or {}).get("enabled"),
         "http_address": (data.get("http") or {}).get("address"),
     }
-    print(json.dumps(output, ensure_ascii=False, indent=2))
+    print(json.dumps(redact(output), ensure_ascii=False, indent=2))
     return 0
 
 
